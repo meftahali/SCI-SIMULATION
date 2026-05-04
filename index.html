@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCI Simulateur Fiscal — IR vs IS | Comparateur complet</title>
+<meta name="description" content="Simulateur fiscal gratuit pour SCI : comparez l'impôt sur le revenu (IR) et l'impôt sur les sociétés (IS). Exploitation, revente, transmission — législation française 2025.">
+<meta name="keywords" content="SCI, IR, IS, simulateur fiscal, immobilier, investissement locatif, plus-value, transmission, patrimoine, France">
+<meta property="og:title" content="SCI Simulateur Fiscal — IR vs IS">
+<meta property="og:description" content="Comparez IR et IS pour votre SCI : exploitation, revente, transmission. Outil gratuit basé sur la législation française 2025.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #06080F;
+    --bg2: #0B1120;
+    --card: #111827;
+    --card-hover: #1a2332;
+    --border: #1E293B;
+    --border-active: #3B82F6;
+    --accent: #3B82F6;
+    --accent-light: #60A5FA;
+    --success: #10B981;
+    --success-bg: rgba(16,185,129,0.08);
+    --danger: #EF4444;
+    --danger-bg: rgba(239,68,68,0.08);
+    --warning: #F59E0B;
+    --warning-bg: rgba(245,158,11,0.08);
+    --text: #E2E8F0;
+    --text-muted: #94A3B8;
+    --text-dim: #64748B;
+    --ir: #8B5CF6;
+    --ir-bg: rgba(139,92,246,0.12);
+    --is: #06B6D4;
+    --is-bg: rgba(6,182,212,0.12);
+    --gold: #D4A843;
+    --font-display: 'Instrument Serif', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  input[type="number"], select {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="number"]:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+  input[type="number"]::-webkit-inner-spin-button { opacity: 0.3; }
+  select { cursor: pointer; font-family: var(--font-body); }
+
+  /* Layout */
+  .app-wrapper { position: relative; z-index: 1; }
+  .header {
+    background: linear-gradient(180deg, rgba(17,24,39,0.95) 0%, rgba(6,8,15,0.98) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 24px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -120px; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(139,92,246,0.08), rgba(6,182,212,0.05), transparent 70%);
+    pointer-events: none;
+  }
+  .header-inner { max-width: 1280px; margin: 0 auto; position: relative; }
+  .header h1 {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .header h1 span.ir-text { color: var(--ir); }
+  .header h1 span.is-text { color: var(--is); }
+  .header p { font-size: 14px; color: var(--text-dim); }
+
+  .main { max-width: 1280px; margin: 0 auto; padding: 24px 16px; display: flex; gap: 28px; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 360px;
+    flex-shrink: 0;
+  }
+  .sidebar-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 28px 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title .icon { font-size: 18px; }
+
+  .field { margin-bottom: 14px; }
+  .field-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .field-hint {
+    cursor: help;
+    font-size: 10px;
+    background: var(--border);
+    border-radius: 50%;
+    width: 15px; height: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+  }
+  .input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+  .input-wrap input {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0;
+    flex: 1;
+  }
+  .input-suffix {
+    padding: 0 12px;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 600;
+    user-select: none;
+  }
+
+  .checkbox-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-bottom: 14px;
+  }
+  .checkbox-field input { accent-color: var(--accent); }
+
+  /* Content area */
+  .content { flex: 1; min-width: 0; }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 3px;
+    background: var(--bg2);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+  .tab {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 16px;
+    border-radius: 9px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    transition: all 0.25s ease;
+    background: transparent;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tab:hover { color: var(--text-muted); }
+  .tab.active {
+    background: var(--card);
+    color: var(--text);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  }
+  .tab .tab-icon { margin-right: 6px; }
+
+  /* Result cards */
+  .results-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    flex: 1;
+    min-width: 190px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .result-card:hover { border-color: var(--border-active); transform: translateY(-1px); }
+  .result-card .rc-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .result-card .rc-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .result-card .rc-value {
+    font-size: 26px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    letter-spacing: -1px;
+  }
+  .result-card .rc-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+  /* Comparison bar */
+  .comp-bar { margin-bottom: 20px; }
+  .comp-bar-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+  .comp-bar-labels b { font-family: var(--font-mono); font-size: 12px; }
+  .comp-bar-track { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--bg2); }
+  .comp-bar-track > div { transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+
+  /* Detail table */
+  .detail-table {
+    background: var(--bg2);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .dt-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .dt-row:last-child { border-bottom: none; }
+  .dt-row:hover { background: rgba(255,255,255,0.015); }
+  .dt-row.hl-ir { background: var(--ir-bg); }
+  .dt-row.hl-is { background: var(--is-bg); }
+  .dt-row.hl-success { background: var(--success-bg); }
+  .dt-row.hl-danger { background: var(--danger-bg); }
+  .dt-row.hl-warning { background: var(--warning-bg); }
+  .dt-label { font-size: 13px; color: var(--text-muted); }
+  .dt-label.bold { color: var(--text); font-weight: 700; }
+  .dt-label .indent { margin-right: 12px; color: var(--text-dim); }
+  .dt-value { font-size: 13px; font-weight: 500; font-family: var(--font-mono); color: var(--text); }
+  .dt-value.bold { font-weight: 700; }
+
+  /* Regime heading */
+  .regime-heading {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 28px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .regime-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  /* Alert boxes */
+  .alert-box {
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-top: 16px;
+  }
+  .alert-box.warning { background: var(--warning-bg); border: 1px solid rgba(245,158,11,0.25); }
+  .alert-box.success { background: var(--success-bg); border: 1px solid rgba(16,185,129,0.25); }
+  .alert-box.info-is { background: var(--is-bg); border: 1px solid rgba(6,182,212,0.25); }
+  .alert-box .alert-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .alert-box .alert-body { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+  /* Recommendation banner */
+  .reco-banner {
+    border-radius: 18px;
+    padding: 32px;
+    text-align: center;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .reco-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.06;
+    background: radial-gradient(ellipse at center, currentColor, transparent 70%);
+  }
+  .reco-banner.reco-ir { border: 2px solid var(--ir); color: var(--ir); background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(139,92,246,0.01)); }
+  .reco-banner.reco-is { border: 2px solid var(--is); color: var(--is); background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(6,182,212,0.01)); }
+  .reco-surtitle { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 8px; font-weight: 600; }
+  .reco-main { font-size: 42px; font-weight: 800; font-family: var(--font-display); margin-bottom: 6px; position: relative; }
+  .reco-sub { font-size: 14px; color: var(--text-muted); position: relative; }
+  .reco-sub b { font-family: var(--font-mono); }
+
+  /* Criteria grid */
+  .criteria-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .criteria-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    transition: border-color 0.2s;
+  }
+  .criteria-card:hover { border-color: var(--border-active); }
+  .criteria-card h4 { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+  .criteria-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-ir { color: var(--ir); background: var(--ir-bg); }
+  .badge-is { color: var(--is); background: var(--is-bg); }
+
+  /* Disclaimer */
+  .disclaimer {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 28px;
+  }
+  .disclaimer p { font-size: 11px; color: var(--text-dim); line-height: 1.7; }
+
+  /* Two-col box */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .regime-box {
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .regime-box.box-ir { background: var(--ir-bg); border: 1px solid rgba(139,92,246,0.2); }
+  .regime-box.box-is { background: var(--is-bg); border: 1px solid rgba(6,182,212,0.2); }
+  .regime-box h4 { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .regime-box p { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
+  .regime-box .big-num { font-size: 22px; font-weight: 700; font-family: var(--font-mono); }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+  .footer p { font-size: 12px; color: var(--text-dim); }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.5s ease both; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .main { flex-direction: column; }
+    .sidebar { width: 100%; }
+    .sidebar-card { position: static; max-height: none; }
+    .criteria-grid { grid-template-columns: 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+    .header h1 { font-size: 26px; }
+    .reco-main { font-size: 32px; }
+    .tabs { overflow-x: auto; }
+  }
+  @media (max-width: 500px) {
+    .results-row { flex-direction: column; }
+    .result-card { min-width: auto; }
+    .tab { font-size: 12px; padding: 9px 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="app-wrapper" id="app"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCI SIMULATEUR FISCAL — IR vs IS (Législation française 2025)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const IR_BRACKETS = [
+  { min: 0, max: 11294, rate: 0 },
+  { min: 11294, max: 28797, rate: 0.11 },
+  { min: 28797, max: 82341, rate: 0.30 },
+  { min: 82341, max: 177106, rate: 0.41 },
+  { min: 177106, max: Infinity, rate: 0.45 },
+];
+const IS_RATE_REDUCED = 0.15, IS_RATE_NORMAL = 0.25, IS_REDUCED_LIMIT = 42500;
+const FLAT_TAX = 0.30, PS_RATE = 0.172, CSG_DED = 0.068;
+const AMORT_IMMEUBLE = 0.02, AMORT_MOBILIER = 0.10;
+
+const PV_ABATT_IR = [
+  { from: 0, to: 5, rate: 0 }, { from: 6, to: 21, rate: 0.06 },
+  { from: 22, to: 22, rate: 0.04 }, { from: 23, to: Infinity, rate: 0 },
+];
+const PV_ABATT_PS = [
+  { from: 0, to: 5, rate: 0 }, { from: 6, to: 21, rate: 0.0165 },
+  { from: 22, to: 22, rate: 0.018 }, { from: 23, to: 30, rate: 0.09 },
+  { from: 31, to: Infinity, rate: 0 },
+];
+
+const fmt = n => new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
+const fmtPct = n => new Intl.NumberFormat('fr-FR',{style:'percent',maximumFractionDigits:1}).format(n);
+
+function computeIR(rev, parts) {
+  const q = rev / parts; let imp = 0;
+  for (const b of IR_BRACKETS) { if (q <= b.min) break; imp += (Math.min(q, b.max) - b.min) * b.rate; }
+  return imp * parts;
+}
+function computeIS(ben) {
+  if (ben <= 0) return 0;
+  if (ben <= IS_REDUCED_LIMIT) return ben * IS_RATE_REDUCED;
+  return IS_REDUCED_LIMIT * IS_RATE_REDUCED + (ben - IS_REDUCED_LIMIT) * IS_RATE_NORMAL;
+}
+function computePVAbatt(dur, table) {
+  let t = 0; for (let y = 1; y <= dur; y++) for (const b of table) if (y >= b.from && y <= b.to) { t += b.rate; break; }
+  return Math.min(t, 1);
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const state = {
+  prixAcquisition: 300000, fraisNotaire: 24000, travaux: 30000,
+  partImmeuble: 80, valeurMobilier: 10000,
+  loyerMensuel: 1500, chargesAnnuelles: 3000, taxeFonciere: 2500,
+  interetsEmprunt: 8000, assuranceEmprunt: 1200, fraisGestion: 0,
+  revenuFoyerAutre: 60000, parts: 2, regimeIR: 'reel',
+  dureeDetention: 15, prixRevente: 400000,
+  nbEnfants: 2, ageAssocies: 55, demembrement: false, capitalRestantDu: 100000,
+  activeTab: 'exploitation',
+};
+
+function update(key, val) { state[key] = val; render(); }
+
+// ─── Calculations ─────────────────────────────────────────────────────────────
+function calc() {
+  const s = state;
+  const loyerAn = s.loyerMensuel * 12;
+  const chargesTotal = s.chargesAnnuelles + s.taxeFonciere + s.interetsEmprunt + s.assuranceEmprunt + s.fraisGestion;
+
+  // === IR ===
+  let revNet;
+  if (s.regimeIR === 'micro') revNet = loyerAn * 0.70;
+  else revNet = loyerAn - chargesTotal;
+  const defFoncier = revNet < 0 ? Math.max(revNet, -10700) : 0;
+  const revFoncImposable = Math.max(revNet, 0);
+  const revTotalSans = s.revenuFoyerAutre;
+  const revTotalAvec = s.revenuFoyerAutre + revFoncImposable + (defFoncier < 0 ? defFoncier : 0);
+  const irSans = computeIR(Math.max(revTotalSans,0), s.parts);
+  const irAvec = computeIR(Math.max(revTotalAvec,0), s.parts);
+  const irSurImmo = irAvec - irSans;
+  const psImmo = Math.max(revFoncImposable,0) * PS_RATE;
+  const fiscIR = irSurImmo + psImmo;
+  const revNetApresImpot = loyerAn - (s.regimeIR==='micro'?0:chargesTotal) - fiscIR;
+  const quotient = Math.max(revTotalAvec,0)/s.parts;
+  let tmiRate = 0; for (const b of IR_BRACKETS) if (quotient > b.min) tmiRate = b.rate;
+
+  // PV IR
+  const pvBruteIR = s.prixRevente - (s.prixAcquisition + s.fraisNotaire + s.travaux);
+  const abIR = computePVAbatt(s.dureeDetention, PV_ABATT_IR);
+  const abPS = computePVAbatt(s.dureeDetention, PV_ABATT_PS);
+  const pvNetIR = Math.max(pvBruteIR*(1-abIR),0);
+  const pvNetPS = Math.max(pvBruteIR*(1-abPS),0);
+  const impPV_IR = pvNetIR*0.19 + pvNetPS*PS_RATE;
+  const surtaxe = pvNetIR>50000?pvNetIR*0.06:0;
+  const pvTotTaxIR = impPV_IR + surtaxe;
+  const pvNetteIR = Math.max(pvBruteIR,0) - pvTotTaxIR;
+  const exoIR22 = s.dureeDetention >= 22;
+  const exoPS30 = s.dureeDetention >= 30;
+
+  // === IS ===
+  const baseImm = (s.prixAcquisition+s.fraisNotaire)*(s.partImmeuble/100);
+  const amortImm = baseImm * AMORT_IMMEUBLE;
+  const amortMob = s.valeurMobilier * AMORT_MOBILIER;
+  const amortTrav = s.travaux / 10;
+  const totalAmort = amortImm + amortMob + amortTrav;
+  const resComptable = loyerAn - chargesTotal - totalAmort;
+  const isAmount = computeIS(Math.max(resComptable,0));
+  const resNet = resComptable - isAmount;
+  const divBruts = Math.max(resNet,0);
+  const flatTaxDiv = divBruts * FLAT_TAX;
+  const divNetsPFU = divBruts - flatTaxDiv;
+  const abatt40 = divBruts * 0.40;
+  const divImposBareme = divBruts - abatt40;
+  const csgDed = divBruts * CSG_DED;
+  const revTotBareme = s.revenuFoyerAutre + divImposBareme - csgDed;
+  const irBareme = computeIR(Math.max(revTotBareme,0), s.parts);
+  const irSansDiv = computeIR(s.revenuFoyerAutre, s.parts);
+  const irSurDiv = irBareme - irSansDiv;
+  const psSurDiv = divBruts * PS_RATE;
+  const totalBareme = irSurDiv + psSurDiv;
+  const divNetsBareme = divBruts - totalBareme;
+  const meilleurOpt = totalBareme < flatTaxDiv ? 'barème' : 'PFU';
+  const meilleurMontant = meilleurOpt==='barème'?totalBareme:flatTaxDiv;
+  const meilleurDivNets = divBruts - meilleurMontant;
+
+  // PV IS
+  const totAmortCumul = totalAmort * s.dureeDetention;
+  const vnc = Math.max(s.prixAcquisition+s.fraisNotaire+s.travaux+s.valeurMobilier-totAmortCumul, 0);
+  const pvBruteIS = s.prixRevente - vnc;
+  const isPV = computeIS(Math.max(pvBruteIS,0));
+  const pvApresIS = Math.max(pvBruteIS,0) - isPV;
+  const flatTaxPV = pvApresIS * FLAT_TAX;
+  const pvNetteAssocies = pvApresIS - flatTaxPV;
+
+  // === TRANSMISSION ===
+  const actifNet = s.prixAcquisition + s.travaux + s.valeurMobilier - s.capitalRestantDu;
+  const valParts = Math.max(actifNet,0);
+  let coeffNP = 1;
+  if (s.demembrement) {
+    const a = s.ageAssocies;
+    if (a<21) coeffNP=0.10; else if(a<31) coeffNP=0.20; else if(a<41) coeffNP=0.30;
+    else if(a<51) coeffNP=0.40; else if(a<61) coeffNP=0.50; else if(a<71) coeffNP=0.60;
+    else if(a<81) coeffNP=0.70; else if(a<91) coeffNP=0.80; else coeffNP=0.90;
+  }
+  const valTransIR = valParts * coeffNP;
+  const valTransIS = valParts * coeffNP;
+
+  const calcDroits = (valTot) => {
+    const parEnf = valTot / Math.max(s.nbEnfants,1);
+    const apresAb = Math.max(parEnf - 100000, 0);
+    let d = 0, prev = 0;
+    const tr = [{max:8072,r:0.05},{max:12109,r:0.10},{max:15932,r:0.15},{max:552324,r:0.20},{max:902838,r:0.30},{max:1805677,r:0.40},{max:Infinity,r:0.45}];
+    for (const t of tr) { if(apresAb<=prev) break; d+=(Math.min(apresAb,t.max)-prev)*t.r; prev=t.max; }
+    return d * s.nbEnfants;
+  };
+  const droitsIR = calcDroits(valTransIR);
+  const droitsIS = calcDroits(valTransIS);
+
+  // === BILAN ===
+  const totFiscIR_exp = fiscIR * s.dureeDetention;
+  const totFiscIS_exp = (isAmount + meilleurMontant) * s.dureeDetention;
+  const totalIR = totFiscIR_exp + pvTotTaxIR + droitsIR;
+  const totalIS = totFiscIS_exp + isPV + flatTaxPV + droitsIS;
+  const ecart = totalIR - totalIS;
+  const reco = ecart > 0 ? 'IS' : 'IR';
+
+  return {
+    loyerAn, chargesTotal, revNet, defFoncier, revFoncImposable, irSurImmo, psImmo, fiscIR, revNetApresImpot, tmiRate,
+    pvBruteIR, abIR, abPS, pvNetIR, pvNetPS, pvTotTaxIR, surtaxe, pvNetteIR, exoIR22, exoPS30,
+    amortImm, amortMob, amortTrav, totalAmort, resComptable, isAmount, resNet,
+    divBruts, flatTaxDiv, divNetsPFU, totalBareme, divNetsBareme, meilleurOpt, meilleurMontant, meilleurDivNets,
+    totAmortCumul, vnc, pvBruteIS, isPV, pvApresIS, flatTaxPV, pvNetteAssocies,
+    valParts, coeffNP, valTransIR, valTransIS, droitsIR, droitsIS,
+    totFiscIR_exp, totFiscIS_exp, totalIR, totalIS, ecart, reco,
+  };
+}
+
+// ─── Render Helpers ───────────────────────────────────────────────────────────
+function field(id, label, suffix='€', tooltip='', step=1000, min=0) {
+  return `<div class="field">
+    <label class="field-label">${label}${tooltip?` <span class="field-hint" title="${tooltip}">?</span>`:''}</label>
+    <div class="input-wrap">
+      <input type="number" value="${state[id]}" min="${min}" step="${step}" onchange="update('${id}',Number(this.value))">
+      ${suffix?`<span class="input-suffix">${suffix}</span>`:''}
+    </div>
+  </div>`;
+}
+
+function selectField(id, label, options, tooltip='') {
+  const opts = options.map(o=>`<option value="${o.v}"${state[id]==o.v?' selected':''}>${o.l}</option>`).join('');
+  return `<div class="field">
+    <label class="field-label">${label}${tooltip?` <span class="field-hint" title="${tooltip}">?</span>`:''}</label>
+    <select onchange="update('${id}',this.value==='true'?true:this.value==='false'?false:isNaN(this.value)?this.value:Number(this.value))">${opts}</select>
+  </div>`;
+}
+
+function dtRow(label, value, opts={}) {
+  const cls = [opts.hl?`hl-${opts.hl}`:''].filter(Boolean).join(' ');
+  const lcls = opts.bold ? 'dt-label bold' : 'dt-label';
+  const vcls = opts.bold ? 'dt-value bold' : 'dt-value';
+  const indent = opts.indent ? '<span class="indent">↳</span>' : '';
+  const color = opts.color ? `color:${opts.color}` : '';
+  return `<div class="dt-row ${cls}"><span class="${lcls}">${indent}${label}</span><span class="${vcls}" style="${color}">${value}</span></div>`;
+}
+
+function resultCard(icon, title, value, sub, color) {
+  return `<div class="result-card"><div class="rc-header"><span style="font-size:16px">${icon}</span><span class="rc-label">${title}</span></div><div class="rc-value" style="color:${color}">${value}</div>${sub?`<div class="rc-sub">${sub}</div>`:''}</div>`;
+}
+
+function compBar(lL,lR,vL,vR,cL,cR) {
+  const t = Math.abs(vL)+Math.abs(vR); const p = t>0?(Math.abs(vL)/t*100):50;
+  return `<div class="comp-bar"><div class="comp-bar-labels"><span>${lL}: <b style="color:${cL}">${fmt(vL)}</b></span><span>${lR}: <b style="color:${cR}">${fmt(vR)}</b></span></div><div class="comp-bar-track"><div style="width:${p}%;background:${cL}"></div><div style="width:${100-p}%;background:${cR}"></div></div></div>`;
+}
+
+// ─── Main Render ──────────────────────────────────────────────────────────────
+function render() {
+  const c = calc();
+  const s = state;
+  const irC = 'var(--ir)', isC = 'var(--is)', ok = 'var(--success)', bad = 'var(--danger)', warn = 'var(--warning)', gold = 'var(--gold)';
+
+  const tabs = [
+    {id:'exploitation',icon:'🏠',label:'Exploitation'},
+    {id:'revente',icon:'💰',label:'Revente'},
+    {id:'transmission',icon:'🤝',label:'Transmission'},
+    {id:'bilan',icon:'⚖️',label:'Bilan Global'},
+  ];
+
+  // Sidebar
+  const sidebar = `
+    <div class="sidebar-title">📋 Paramètres de simulation</div>
+    <div class="section-title"><span class="icon">🏢</span> Le bien</div>
+    ${field('prixAcquisition',"Prix d'acquisition",'€',"Prix d'achat du bien immobilier")}
+    ${field('fraisNotaire','Frais de notaire')}
+    ${field('travaux','Travaux')}
+    ${field('partImmeuble','Part immeuble (vs terrain)','%','Pourcentage attribué à la construction (pour amortissement IS)',5)}
+    ${field('valeurMobilier','Valeur mobilier','€','Meubles, équipements (amortissement IS sur 10 ans)')}
+
+    <div class="section-title"><span class="icon">💶</span> Revenus & Charges</div>
+    ${field('loyerMensuel','Loyer mensuel')}
+    ${field('chargesAnnuelles','Charges annuelles','€','Copropriété, entretien, assurance PNO...')}
+    ${field('taxeFonciere','Taxe foncière')}
+    ${field('interetsEmprunt',"Intérêts d'emprunt / an")}
+    ${field('assuranceEmprunt','Assurance emprunt / an')}
+    ${field('fraisGestion','Frais de gestion / an','€','Honoraires agence, comptable...')}
+
+    <div class="section-title"><span class="icon">👨‍👩‍👧‍👦</span> Foyer fiscal</div>
+    ${field('revenuFoyerAutre','Autres revenus du foyer','€','Revenus hors SCI (salaires, etc.)')}
+    ${selectField('parts','Nombre de parts',[
+      {v:1,l:'1 part (célibataire)'},{v:1.5,l:'1,5 parts'},{v:2,l:'2 parts (couple)'},
+      {v:2.5,l:'2,5 parts'},{v:3,l:'3 parts'},{v:3.5,l:'3,5 parts'},{v:4,l:'4 parts'},
+    ])}
+    ${selectField('regimeIR','Régime IR foncier',[
+      {v:'reel',l:'Réel (déduction des charges)'},{v:'micro',l:'Micro-foncier (abattement 30%)'},
+    ],'Micro-foncier si loyers < 15 000€/an')}
+
+    <div class="section-title"><span class="icon">🏷️</span> Revente</div>
+    ${field('dureeDetention','Durée de détention','ans','Nombre d\'années avant revente',1)}
+    ${field('prixRevente','Prix de revente estimé')}
+
+    <div class="section-title"><span class="icon">🤝</span> Transmission</div>
+    ${field('nbEnfants',"Nombre d'enfants",'',''  ,1,0)}
+    ${field('ageAssocies',"Âge de l'usufruitier",'ans','Pour le barème de démembrement',1)}
+    ${field('capitalRestantDu','Capital restant dû','€','Emprunt en cours (réduit la valeur des parts)')}
+    <label class="checkbox-field">
+      <input type="checkbox" ${s.demembrement?'checked':''} onchange="update('demembrement',this.checked)">
+      Démembrement de propriété
+    </label>
+  `;
+
+  // Tabs
+  const tabsHTML = tabs.map(t=>
+    `<button class="tab${s.activeTab===t.id?' active':''}" onclick="update('activeTab','${t.id}')"><span class="tab-icon">${t.icon}</span>${t.label}</button>`
+  ).join('');
+
+  // Content per tab
+  let content = '';
+
+  if (s.activeTab === 'exploitation') {
+    content = `
+      <div class="results-row fade-up">
+        ${resultCard('🟣','Revenu net IR',fmt(c.revNetApresImpot),`TMI: ${fmtPct(c.tmiRate)}`,irC)}
+        ${resultCard('🔵','Revenu net IS',fmt(c.meilleurDivNets),`Option ${c.meilleurOpt}`,isC)}
+        ${resultCard('📊','Écart annuel',fmt(Math.abs(c.revNetApresImpot-c.meilleurDivNets)),`Avantage ${c.revNetApresImpot>c.meilleurDivNets?'IR':'IS'}`,c.revNetApresImpot>c.meilleurDivNets?irC:isC)}
+      </div>
+      ${compBar('Fiscalité IR','Fiscalité IS',c.fiscIR,c.isAmount+c.meilleurMontant,irC,isC)}
+
+      <div class="regime-heading" style="color:var(--ir)"><span class="regime-dot" style="background:var(--ir)"></span> SCI à l'IR — Revenus fonciers</div>
+      <div class="detail-table">
+        ${dtRow('Loyers annuels bruts',fmt(c.loyerAn))}
+        ${s.regimeIR==='micro'
+          ? dtRow('Abattement micro-foncier (30%)',`-${fmt(c.loyerAn*0.30)}`,{indent:true,color:ok})
+          : dtRow('Charges déductibles',`-${fmt(s.chargesAnnuelles+s.taxeFonciere+s.fraisGestion)}`,{indent:true})
+            + dtRow('Intérêts + assurance emprunt',`-${fmt(s.interetsEmprunt+s.assuranceEmprunt)}`,{indent:true})
+        }
+        ${dtRow('Revenu foncier net',fmt(c.revNet),{bold:true,color:c.revNet>=0?ok:bad})}
+        ${c.defFoncier<0?dtRow('Déficit foncier imputable',fmt(c.defFoncier),{color:ok,hl:'success'}):''}
+        ${dtRow(`IR marginal (TMI ${fmtPct(c.tmiRate)})`,fmt(c.irSurImmo),{color:bad})}
+        ${dtRow('Prélèvements sociaux (17,2%)',fmt(c.psImmo),{color:bad})}
+        ${dtRow('Total fiscalité IR',fmt(c.fiscIR),{bold:true,hl:'ir',color:irC})}
+        ${dtRow('Revenu net après impôt',fmt(c.revNetApresImpot),{bold:true,color:c.revNetApresImpot>=0?ok:bad})}
+      </div>
+
+      <div class="regime-heading" style="color:var(--is)"><span class="regime-dot" style="background:var(--is)"></span> SCI à l'IS — Résultat & Dividendes</div>
+      <div class="detail-table">
+        ${dtRow('Loyers annuels bruts',fmt(c.loyerAn))}
+        ${dtRow("Charges d'exploitation",`-${fmt(c.chargesTotal)}`,{indent:true})}
+        ${dtRow('Amortissement immeuble (2%)',`-${fmt(c.amortImm)}`,{indent:true,color:isC})}
+        ${dtRow('Amortissement mobilier (10%)',`-${fmt(c.amortMob)}`,{indent:true,color:isC})}
+        ${dtRow('Amortissement travaux',`-${fmt(c.amortTrav)}`,{indent:true,color:isC})}
+        ${dtRow('Résultat comptable',fmt(c.resComptable),{bold:true})}
+        ${dtRow(`IS (${c.resComptable<=IS_REDUCED_LIMIT?'15%':'15% + 25%'})`,fmt(c.isAmount),{color:bad})}
+        ${dtRow('Résultat net (distribuable)',fmt(c.resNet),{bold:true})}
+        ${dtRow('——— Distribution dividendes ———','',{color:'var(--text-dim)'})}
+        ${dtRow('Option PFU (30%)',fmt(c.flatTaxDiv),{indent:true})}
+        ${dtRow('→ Dividendes nets PFU',fmt(c.divNetsPFU),{indent:true})}
+        ${dtRow('Option barème (abatt. 40%)',fmt(c.totalBareme),{indent:true})}
+        ${dtRow('→ Dividendes nets barème',fmt(c.divNetsBareme),{indent:true})}
+        ${dtRow(`Meilleure option : ${c.meilleurOpt}`,fmt(c.meilleurDivNets),{bold:true,hl:'is',color:isC})}
+      </div>
+    `;
+  }
+
+  else if (s.activeTab === 'revente') {
+    content = `
+      <div class="results-row fade-up">
+        ${resultCard('🟣','PV nette IR',fmt(c.pvNetteIR),c.exoIR22?'Exonéré IR (22+ ans)':`Après abattement ${fmtPct(c.abIR)}`,irC)}
+        ${resultCard('🔵','PV nette IS',fmt(c.pvNetteAssocies),'Après IS + flat tax distribution',isC)}
+      </div>
+      ${compBar('Impôt PV IR','Impôt PV IS',c.pvTotTaxIR,c.isPV+c.flatTaxPV,irC,isC)}
+
+      <div class="regime-heading" style="color:var(--ir)">🟣 Plus-value IR (régime des particuliers)</div>
+      <div class="detail-table">
+        ${dtRow('Prix de revente',fmt(s.prixRevente))}
+        ${dtRow("Prix d'acquisition + frais + travaux",fmt(s.prixAcquisition+s.fraisNotaire+s.travaux))}
+        ${dtRow('Plus-value brute',fmt(c.pvBruteIR),{bold:true,color:c.pvBruteIR>=0?ok:bad})}
+        ${dtRow(`Abattement IR (${s.dureeDetention} ans)`,fmtPct(c.abIR),{color:ok})}
+        ${dtRow(`Abattement PS (${s.dureeDetention} ans)`,fmtPct(c.abPS),{color:ok})}
+        ${c.exoIR22?dtRow('✅ Exonération IR atteinte (22 ans)','0 €',{hl:'success',bold:true}):dtRow('Impôt PV (19%)',fmt(c.pvNetIR*0.19),{color:bad})}
+        ${c.exoPS30?dtRow('✅ Exonération PS atteinte (30 ans)','0 €',{hl:'success',bold:true}):dtRow('PS sur PV',fmt(c.pvNetPS*PS_RATE),{color:bad})}
+        ${c.surtaxe>0?dtRow('Surtaxe PV > 50k€',fmt(c.surtaxe),{color:bad}):''}
+        ${dtRow('Total impôt PV',fmt(c.pvTotTaxIR),{bold:true,hl:'ir',color:irC})}
+        ${dtRow('Plus-value nette',fmt(c.pvNetteIR),{bold:true,color:ok})}
+      </div>
+
+      <div class="regime-heading" style="color:var(--is)">🔵 Plus-value IS (régime professionnel)</div>
+      <div class="detail-table">
+        ${dtRow('Prix de revente',fmt(s.prixRevente))}
+        ${dtRow("Coût d'acquisition total",fmt(s.prixAcquisition+s.fraisNotaire+s.travaux+s.valeurMobilier))}
+        ${dtRow(`Amortissements cumulés (${s.dureeDetention} ans)`,fmt(c.totAmortCumul),{color:warn})}
+        ${dtRow('Valeur nette comptable (VNC)',fmt(c.vnc),{bold:true})}
+        ${dtRow('Plus-value brute IS',fmt(c.pvBruteIS),{bold:true,color:c.pvBruteIS>=0?warn:ok})}
+        ${dtRow("⚠️ Pas d'abattement pour durée",'—',{color:warn})}
+        ${dtRow('IS sur plus-value',fmt(c.isPV),{color:bad})}
+        ${dtRow('PV après IS',fmt(c.pvApresIS))}
+        ${dtRow('Flat tax distribution (30%)',fmt(c.flatTaxPV),{color:bad})}
+        ${dtRow('PV nette associés',fmt(c.pvNetteAssocies),{bold:true,hl:'is',color:isC})}
+      </div>
+      <div class="alert-box warning">
+        <div class="alert-title" style="color:var(--warning)">⚠️ Point d'attention IS</div>
+        <div class="alert-body">À l'IS, les amortissements pratiqués réduisent la VNC et augmentent la plus-value imposable lors de la revente. C'est le principal inconvénient du régime IS sur le long terme. Aucun abattement pour durée de détention ne s'applique.</div>
+      </div>
+    `;
+  }
+
+  else if (s.activeTab === 'transmission') {
+    content = `
+      <div class="results-row fade-up">
+        ${resultCard('🟣','Droits donation IR',fmt(c.droitsIR),`${s.nbEnfants} enfant(s)`,irC)}
+        ${resultCard('🔵','Droits donation IS',fmt(c.droitsIS),`${s.nbEnfants} enfant(s)`,isC)}
+      </div>
+      ${compBar('Droits IR','Droits IS',c.droitsIR,c.droitsIS,irC,isC)}
+
+      <div class="regime-heading" style="color:var(--gold)">🏛️ Valorisation des parts</div>
+      <div class="detail-table">
+        ${dtRow('Actif brut (prix + travaux + mobilier)',fmt(s.prixAcquisition+s.travaux+s.valeurMobilier))}
+        ${dtRow('Passif (capital restant dû)',`-${fmt(s.capitalRestantDu)}`,{color:ok})}
+        ${dtRow('Valeur nette des parts',fmt(c.valParts),{bold:true})}
+        ${s.demembrement?dtRow(`Démembrement — Nue-propriété (${fmtPct(c.coeffNP)})`,'',{bold:true,color:gold})+dtRow('Valeur nue-propriété transmise',fmt(c.valTransIR),{bold:true,color:gold,hl:'success'}):''}
+        ${dtRow("Abattement par enfant",fmt(100000))}
+        ${dtRow(`Total abattements (${s.nbEnfants} enfants)`,fmt(100000*s.nbEnfants),{color:ok})}
+      </div>
+
+      <div class="two-col">
+        <div class="regime-box box-ir">
+          <h4 style="color:var(--ir)">SCI à l'IR</h4>
+          <p>Valeur des parts = valeur vénale réelle. Évaluées sur la valeur de marché du bien, diminuée du passif.</p>
+          <div class="big-num" style="color:var(--ir)">${fmt(c.droitsIR)}</div>
+        </div>
+        <div class="regime-box box-is">
+          <h4 style="color:var(--is)">SCI à l'IS</h4>
+          <p>Même base en principe (valeur vénale). L'IS permet cependant de capitaliser les bénéfices et différer la distribution.</p>
+          <div class="big-num" style="color:var(--is)">${fmt(c.droitsIS)}</div>
+        </div>
+      </div>
+
+      ${s.demembrement?`<div class="alert-box success"><div class="alert-title" style="color:var(--success)">✅ Effet du démembrement</div><div class="alert-body">La donation de la nue-propriété réduit l'assiette taxable de ${fmtPct(1-c.coeffNP)} (valeur de l'usufruit). À la réunification (décès de l'usufruitier), les enfants récupèrent la pleine propriété sans droits supplémentaires.</div></div>`:''}
+      ${s.capitalRestantDu>0?`<div class="alert-box info-is"><div class="alert-title" style="color:var(--is)">💡 Effet de levier de la dette</div><div class="alert-body">Le capital restant dû de ${fmt(s.capitalRestantDu)} réduit la valeur des parts et donc les droits de donation. Stratégie optimale : transmettre les parts quand l'endettement est élevé.</div></div>`:''}
+    `;
+  }
+
+  else if (s.activeTab === 'bilan') {
+    const recoClass = c.reco === 'IS' ? 'reco-is' : 'reco-ir';
+    content = `
+      <div class="reco-banner ${recoClass} fade-up">
+        <div class="reco-surtitle">Recommandation</div>
+        <div class="reco-main">SCI à l'${c.reco}</div>
+        <div class="reco-sub">Économie totale de <b style="color:var(--success)">${fmt(Math.abs(c.ecart))}</b> sur ${s.dureeDetention} ans</div>
+      </div>
+
+      <div class="results-row">
+        ${resultCard('🟣','Coût total IR',fmt(c.totalIR),`${s.dureeDetention} ans`,irC)}
+        ${resultCard('🔵','Coût total IS',fmt(c.totalIS),`${s.dureeDetention} ans`,isC)}
+      </div>
+
+      <div class="regime-heading">📊 Décomposition du coût fiscal total</div>
+      <div class="detail-table">
+        ${dtRow('──── SCI à l\'IR ────','',{bold:true,color:irC})}
+        ${dtRow(`Fiscalité exploitation × ${s.dureeDetention} ans`,fmt(c.totFiscIR_exp),{indent:true})}
+        ${dtRow('Impôt sur plus-value (revente)',fmt(c.pvTotTaxIR),{indent:true})}
+        ${dtRow('Droits de donation',fmt(c.droitsIR),{indent:true})}
+        ${dtRow('TOTAL IR',fmt(c.totalIR),{bold:true,hl:'ir',color:irC})}
+        ${dtRow('','')}
+        ${dtRow('──── SCI à l\'IS ────','',{bold:true,color:isC})}
+        ${dtRow(`Fiscalité exploitation × ${s.dureeDetention} ans`,fmt(c.totFiscIS_exp),{indent:true})}
+        ${dtRow('IS sur plus-value (revente)',fmt(c.isPV),{indent:true})}
+        ${dtRow('Flat tax distribution PV',fmt(c.flatTaxPV),{indent:true})}
+        ${dtRow('Droits de donation',fmt(c.droitsIS),{indent:true})}
+        ${dtRow('TOTAL IS',fmt(c.totalIS),{bold:true,hl:'is',color:isC})}
+        ${dtRow('','')}
+        ${dtRow(`ÉCART (avantage ${c.reco})`,fmt(Math.abs(c.ecart)),{bold:true,hl:'success',color:ok})}
+      </div>
+
+      <div class="regime-heading">🎯 Critères qualitatifs de choix</div>
+      <div class="criteria-grid">
+        ${[
+          {l:'Amortissement du bien',ir:'❌ Non',is:'✅ Oui'},
+          {l:'Déficit foncier',ir:'✅ Oui (10 700€/an)',is:'❌ Report IS'},
+          {l:'Abattement PV durée',ir:'✅ Exo 22/30 ans',is:'❌ Non'},
+          {l:'Comptabilité',ir:'✅ Simplifiée',is:'⚠️ Bilan obligatoire'},
+          {l:'Capitalisation bénéfices',ir:'❌ Imposé même si non distribué',is:'✅ Trésorerie société'},
+          {l:'TMI élevé',ir:'⚠️ Jusqu\'à 45%+17,2%',is:'✅ Plafonné 25%'},
+          {l:'Transmission optimisée',ir:'⚠️ Standard',is:'✅ Capitalisation'},
+          {l:'Résidence principale',ir:'✅ Exonération PV',is:'❌ Impossible'},
+        ].map(i=>`<div class="criteria-card"><h4>${i.l}</h4><div class="criteria-badges"><span class="badge badge-ir">${i.ir}</span><span class="badge badge-is">${i.is}</span></div></div>`).join('')}
+      </div>
+
+      <div class="disclaimer">
+        <p>⚠️ <b>Avertissement</b> — Cette simulation est fournie à titre indicatif et ne constitue pas un conseil fiscal ou juridique. Les calculs sont basés sur la législation française en vigueur (barème IR 2025, taux IS, PFU, abattements PV). Des paramètres comme les travaux déductibles, les régimes spéciaux (Pinel, Malraux, etc.), l'IFI, ou les situations familiales complexes ne sont pas pris en compte. Consultez un expert-comptable ou un avocat fiscaliste pour une analyse personnalisée.</p>
+      </div>
+    `;
+  }
+
+  document.getElementById('app').innerHTML = `
+    <header class="header">
+      <div class="header-inner">
+        <h1>SCI Simulateur — <span class="ir-text">IR</span> vs <span class="is-text">IS</span></h1>
+        <p>Comparez les régimes fiscaux pour votre SCI — Exploitation, revente, transmission</p>
+      </div>
+    </header>
+    <div class="main">
+      <aside class="sidebar"><div class="sidebar-card">${sidebar}</div></aside>
+      <section class="content">
+        <div class="tabs">${tabsHTML}</div>
+        <div>${content}</div>
+        <footer class="footer"><p>Législation française 2025 • Simulation à titre indicatif uniquement • Consultez un professionnel</p></footer>
+      </section>
+    </div>
+  `;
+}
+
+// Boot
+render();
+</script>
+</body>
+</html>
